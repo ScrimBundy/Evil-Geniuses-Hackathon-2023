@@ -35,16 +35,29 @@ Order of team doing the action
 __team_order = [0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1]
 
 
+def iterative_deepening(node, max_depth, top_n=10):
+    top_moves = []
+    alpha, beta = -np.inf, np.inf
+    for depth in range(1, max_depth + 1):
+        action, score = minimax_for_blue(node, depth, 0, alpha, beta)  # Pass depth, order_index, alpha, and beta
+        if action is not None:
+            top_moves.append((action, score))
+            top_moves.sort(key=lambda x: x[1], reverse=True)
+            top_moves = top_moves[:top_n]
+    return top_moves
+
+
 def minimax_for_blue(node, depth, order_index, alpha, beta):
     """
     Calculates the best next action for blue to take on a given draft round
     :param node: search space node to evaluate
     :param depth: depth of the current node
     :param order_index: index of the draft order
-    :param alpha:
-    :param beta:
+    :param alpha: The best value found so far for the maximizing team
+    :param beta: The best value found so far for the minimizing team
     :return:
     """
+    best_action = None
     if depth == 0 or node.is_terminal():
         return node.evaluate()
 
@@ -58,41 +71,49 @@ def minimax_for_blue(node, depth, order_index, alpha, beta):
             # Blue ban
             max_eval = -np.inf
             for child in node.children:
-                eval = minimax_for_blue(child, depth - 1, order_index, alpha, beta)
-                max_eval = max(max_eval, eval)
+                _, eval = minimax_for_blue(child, depth - 1, order_index, alpha, beta)
+                if eval > max_eval:
+                    max_eval = eval
+                    best_action = child  # Store the best action
                 alpha = max(alpha, eval)
                 if alpha >= beta:
                     break  # Prune the rest of the subtree
-            return max_eval
+            return best_action, max_eval
         else:
             # Red ban
             min_eval = np.inf
             for child in node.children:
-                eval = minimax_for_blue(child, depth - 1, order_index, alpha, beta)
-                min_eval = min(min_eval, eval)
+                _, eval = minimax_for_blue(child, depth - 1, order_index, alpha, beta)
+                if eval < min_eval:
+                    min_eval = eval
+                    best_action = child  # Store the best action
                 beta = min(beta, eval)
                 if alpha >= beta:
                     break  # Prune the rest of the subtree
-            return min_eval
+            return best_action, min_eval
     else:
         # Pick
         if current_team == 0:
             # Blue pick
             max_eval = -np.inf
             for child in node.children:
-                eval = minimax_for_blue(child, depth - 1, order_index, alpha, beta)
-                max_eval = max(max_eval, eval)
+                _, eval = minimax_for_blue(child, depth - 1, order_index, alpha, beta)
+                if eval > max_eval:
+                    max_eval = eval
+                    best_action = child  # Store the best action
                 alpha = max(alpha, eval)
                 if alpha >= beta:
                     break  # Prune the rest of the subtree
-            return max_eval
+            return best_action, max_eval
         else:
             # Red pick
             min_eval = np.inf
             for child in node.children:
-                eval = minimax_for_blue(child, depth - 1, order_index, alpha, beta)
-                min_eval = min(min_eval, eval)
+                _, eval = minimax_for_blue(child, depth - 1, order_index, alpha, beta)
+                if eval < min_eval:
+                    min_eval = eval
+                    best_action = child  # Store the best action
                 beta = min(beta, eval)
                 if alpha >= beta:
                     break  # Prune the rest of the subtree
-            return min_eval
+            return best_action, min_eval
