@@ -1,26 +1,6 @@
 import numpy as np
 
 
-class DraftNode:
-    def __init__(
-            self, blue_bans, red_bans,
-            blue_picks, red_picks, is_max,
-            evaluation_function,
-            alpha=-np.inf, beta=np.inf):
-        self.blue_bans = blue_bans
-        self.red_bans = red_bans
-        self.blue_picks = blue_picks
-        self.red_picks = red_picks
-        self.is_max = is_max
-        self.children = []
-        self.evaluate = evaluation_function
-        self.alpha = alpha
-        self.beta = beta
-
-    def is_terminal(self):
-        return len(self.blue_picks) == 5 or len(self.red_picks) == 5
-
-
 """
 Order of picks/bans
 0: ban
@@ -33,6 +13,28 @@ Order of team doing the action
 1: red
 """
 __team_order = [0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1]
+
+
+class DraftNode:
+    def __init__(
+            self, blue_bans, red_bans,
+            blue_picks, red_picks, order_index,
+            evaluation_function,
+            alpha=-np.inf, beta=np.inf):
+        self.blue_bans = blue_bans
+        self.red_bans = red_bans
+        self.blue_picks = blue_picks
+        self.red_picks = red_picks
+        self.order_index = order_index
+        self.evaluate = evaluation_function
+        self.alpha = alpha
+        self.beta = beta
+
+    def is_terminal(self):
+        return self.order_index >= 20
+
+    def get_child(self):
+        return self
 
 
 def iterative_deepening(node, max_depth, top_n=10):
