@@ -28,10 +28,20 @@ class DraftNode:
         self.evaluate = evaluation_function
 
     def is_terminal(self):
+        """
+        Determines whether this node is terminal
+        :return: true/false
+        """
         return self.order_index >= 20
 
-    def get_child(self, next_action, next_team):
-        if next_action == 1:
+    def get_children(self, next_action, next_team):
+        """
+        Returns a list of all possible child nodes.
+        :param next_action: Action taken to create the child nodes [0: ban, 1: pick]
+        :param next_team: Team that performed the action to create the child node [0: blue, 1: red]
+        :return: list of all possible child nodes
+        """
+        if next_action == 0:
             # stub
             return self
         else:
@@ -40,6 +50,14 @@ class DraftNode:
 
 
 def iterative_deepening(node, max_depth, top_n=10):
+    """
+    Performs minimax to a defined depth, providing the best found actions.
+    Requires that partial evaluation be implemented.
+    :param node: root tree node
+    :param max_depth: maximum search depth
+    :param top_n: number of top actions to retain
+    :return: list of the top n best actions in reverse sorted order
+    """
     # Store top n best moves in reverse sorted order
     top_moves = []
     # Initialize alpha and beta
@@ -57,27 +75,9 @@ def iterative_deepening(node, max_depth, top_n=10):
 
 
 def minimax(maximize_blue, node, depth, max_depth, order_index, alpha, beta):
-    best_action = None
-    if depth == 0 or node.is_terminal():
-        return node.evaluate()
-
-    # Remove if partial evaluation is not finished
-    if depth >= max_depth:
-        return node.evaluate()
-
-    current_action = __action_order[order_index]
-    current_team = __team_order[order_index]
-    order_index += 1
-
-    if maximize_blue:
-        return minimax_for_blue(node, depth, max_depth, order_index, alpha, beta, current_team, current_action)
-    else:
-        return minimax_for_red(node, depth, max_depth, order_index, alpha, beta, current_team, current_action)
-
-
-def minimax_for_blue(node, depth, max_depth, order_index, alpha, beta, current_team, current_action):
     """
     Calculates the best next action for blue to take on a given draft round
+    :param maximize_blue: finding the best actions for blue team [True/False]
     :param node: search space node to evaluate
     :param depth: depth of the current node
     :param max_depth: depth of an early termination layer
@@ -87,10 +87,42 @@ def minimax_for_blue(node, depth, max_depth, order_index, alpha, beta, current_t
     :return:
     """
     best_action = None
+    if depth == 0 or node.is_terminal():
+        return node.evaluate()
+
+    # Remove if partial evaluation is not finished
+    if depth >= max_depth:
+        return node.evaluate()
+
+    current_team = __team_order[order_index]
+    order_index += 1
+
+    if maximize_blue:
+        return minimax_for_blue(node, depth, max_depth, order_index, alpha, beta, current_team)
+    else:
+        return minimax_for_red(node, depth, max_depth, order_index, alpha, beta, current_team)
+
+
+def minimax_for_blue(node, depth, max_depth, order_index, alpha, beta, current_team):
+    """
+    Calculates the best next action for blue to take on a given draft round
+    :param node: search space node to evaluate
+    :param depth: depth of the current node
+    :param max_depth: depth of an early termination layer
+    :param order_index: index of the draft order
+    :param alpha: The best value found so far for the maximizing team
+    :param beta: The best value found so far for the minimizing team
+    :param current_team: value representing which team made the current action
+    :return:
+    """
+    best_action = None
+    next_action = __action_order[order_index]
+    next_team = __team_order[order_index]
+
     if current_team == 0:
         # Blue
         max_eval = -np.inf
-        for child in node.children:
+        for child in node.getChildren(next_action, next_team):
             _, eval = minimax(True, child, depth + 1, max_depth, order_index, alpha, beta)
             if eval > max_eval:
                 max_eval = eval
@@ -102,7 +134,7 @@ def minimax_for_blue(node, depth, max_depth, order_index, alpha, beta, current_t
     else:
         # Red
         min_eval = np.inf
-        for child in node.children:
+        for child in node.getChildren(next_action, next_team):
             _, eval = minimax(True, child, depth + 1, max_depth, order_index, alpha, beta)
             if eval < min_eval:
                 min_eval = eval
@@ -113,7 +145,7 @@ def minimax_for_blue(node, depth, max_depth, order_index, alpha, beta, current_t
         return best_action, min_eval
 
 
-def minimax_for_red(node, depth, max_depth, order_index, alpha, beta, current_team, current_action):
+def minimax_for_red(node, depth, max_depth, order_index, alpha, beta, current_team):
     """
     Calculates the best next action for blue to take on a given draft round
     :param node: search space node to evaluate
@@ -122,13 +154,17 @@ def minimax_for_red(node, depth, max_depth, order_index, alpha, beta, current_te
     :param order_index: index of the draft order
     :param alpha: The best value found so far for the maximizing team
     :param beta: The best value found so far for the minimizing team
+    :param current_team: value representing which team made the current action
     :return:
     """
     best_action = None
+    next_action = __action_order[order_index]
+    next_team = __team_order[order_index]
+
     if current_team == 0:
         # Blue
         min_eval = np.inf
-        for child in node.children:
+        for child in node.getChildren(next_action, next_team):
             _, eval = minimax(False, child, depth + 1, max_depth, order_index, alpha, beta)
             if eval < min_eval:
                 min_eval = eval
@@ -140,7 +176,7 @@ def minimax_for_red(node, depth, max_depth, order_index, alpha, beta, current_te
     else:
         # Red
         max_eval = -np.inf
-        for child in node.children:
+        for child in node.getChildren(next_action, next_team):
             _, eval = minimax(False, child, depth + 1, max_depth, order_index, alpha, beta)
             if eval > max_eval:
                 max_eval = eval
