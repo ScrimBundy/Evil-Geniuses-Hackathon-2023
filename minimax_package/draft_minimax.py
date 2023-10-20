@@ -33,23 +33,33 @@ class DraftNode:
     def is_terminal(self):
         return self.order_index >= 20
 
-    def get_child(self):
-        return self
+    def get_child(self, next_action, next_team):
+        if next_action == 1:
+            # stub
+            return self
+        else:
+            # stub
+            return self
 
 
 def iterative_deepening(node, max_depth, top_n=10):
+    # Store top n best moves in reverse sorted order
     top_moves = []
+    # Initialize alpha and beta
     alpha, beta = -np.inf, np.inf
     for depth in range(1, max_depth + 1):
-        action, score = minimax_for_blue(node, depth, 0, alpha, beta)  # Pass depth, order_index, alpha, and beta
+        action, score = minimax_for_blue(node, depth, max_depth, 0, alpha, beta)
         if action is not None:
+            # Attempt to add move to the list
             top_moves.append((action, score))
+            # Sort the list by the score in reverse order
             top_moves.sort(key=lambda x: x[1], reverse=True)
+            # Only retain the first 10 elements of the list
             top_moves = top_moves[:top_n]
     return top_moves
 
 
-def minimax_for_blue(node, depth, order_index, alpha, beta):
+def minimax_for_blue(node, depth, max_depth, order_index, alpha, beta):
     """
     Calculates the best next action for blue to take on a given draft round
     :param node: search space node to evaluate
@@ -61,6 +71,10 @@ def minimax_for_blue(node, depth, order_index, alpha, beta):
     """
     best_action = None
     if depth == 0 or node.is_terminal():
+        return node.evaluate()
+
+    # Remove if partial evaluation is not finished
+    if depth >= max_depth:
         return node.evaluate()
 
     current_action = __action_order[order_index]
